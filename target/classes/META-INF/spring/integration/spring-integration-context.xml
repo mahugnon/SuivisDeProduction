@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:int="http://www.springframework.org/schema/integration"
+	xmlns:int-jdbc="http://www.springframework.org/schema/integration/jdbc"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xsi:schemaLocation="http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+		http://www.springframework.org/schema/integration/jdbc http://www.springframework.org/schema/integration/jdbc/spring-integration-jdbc.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<jdbc:initialize-database data-source="datasource"
+		enabled="true">
+
+		<jdbc:script location="classpath:setup-tables.sql" />
+	</jdbc:initialize-database>
+	<bean id="metier" class="tn.suvis.production.metier.SuivisMetierImpl" />
+	<bean id="datasource"
+		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+		<property name="driverClassName" value="com.mysql.jdbc.Driver" />
+		<property name="url"
+			value="jdbc:mysql://localhost:3306/leoni_db" />
+		<property name="username" value="root" />
+		<property name="password" value="" />
+	</bean>
+
+	<!-- <jdbc:embedded-database id="datasource" type="H2"> <jdbc:script location="classpath:setup-tables.sql"/> 
+		</jdbc:embedded-database> -->
+
+	<!-- See also: http://static.springsource.org/spring-integration/reference/htmlsingle/#gateway-proxy 
+		http://www.eaipatterns.com/MessagingGateway.html -->
+	<!-- create mesure -->
+	<int:channel id="createMesureRequestChannel" />
+	<int:channel id="createMesureReplyChannel" />
+	<!-- load concerned plant section -->
+	<int:channel id="findPlentSectionRequestChannel" />
+	<int:channel id="findPlentSectionReplyChannel" />
+
+	<!-- load concerned segment -->
+	<int:channel id="findChefSegmentRequestChannel" />
+	<int:channel id="findChefSegmentReplyChannel" />
+
+	<!--load concerned contremaitre -->
+	<int:channel id="findControleMaitreRequestChannel" />
+	<int:channel id="findControleMaitreReplyChannel" />
+
+	<!-- load concerned chaine -->
+	<int:channel id="findChaineRequestChannel" />
+	<int:channel id="findChaineReplyChannel" />
+
+	<!-- load current configuration -->
+	<int:channel id="findLastConfigRequestChanel" />
+	<int:channel id="findLastConfigReplyChanel" />
+
+	<!-- load the last stop in a specific chaine -->
+	<int:channel id="findLastArretRequestChanel" />
+	<int:channel id="findLastArretReplyChanel" />
+
+	<!-- load the last stop in a specific chaine -->
+	<int:channel id="createArretRequestChanel" />
+	<int:channel id="createArretReplyChanel" />
+	<!-- update a stop -->
+	<int:channel id="updateArretRequestChanel" />
+	<int:channel id="updateArretReplyChanel" />
+	
+	<!-- creation de production -->
+	<int:channel id="createProductionRequestChanel" />
+	<int:channel id="createProductionReplyChanel" />
+	
+		<!-- chargement de production -->
+	<int:channel id="loadProductionRequestChanel" />
+	<int:channel id="loadProductionReplyChanel" />
+	
+	<!-- mise a jour de production -->
+	<int:channel id="updateProductionRequestChanel" />
+	<int:channel id="updateProductionReplyChanel" />
+	
+
+	<int:gateway id="mesureService" service-interface="tn.suvis.production.metier.MesureMetier">
+		<int:method name="createMesure" request-channel="createMesureRequestChannel"
+			request-timeout="2000" reply-channel="createMesureReplyChannel"
+			reply-timeout="2000" />
+
+		<int:method name="findChefChaine" request-channel="findChaineRequestChannel"
+			request-timeout="2000" reply-channel="findChaineReplyChannel"
+			reply-timeout="2000" />
+
+		<int:method name="findControleMaitre" request-channel="findControleMaitreRequestChannel"
+			request-timeout="2000" reply-channel="findControleMaitreReplyChannel"
+			reply-timeout="2000" />
+
+		<int:method name="findPlentSection" request-channel="findPlentSectionRequestChannel"
+			request-timeout="2000" reply-channel="findPlentSectionReplyChannel"
+			reply-timeout="2000" />
+
+		<int:method name="findLastConfig" request-channel="findLastConfigRequestChanel"
+			request-timeout="2000" reply-channel="findLastConfigReplyChanel"
+			reply-timeout="2000" />
+
+		<int:method name="findChefSegment" request-channel="findChefSegmentRequestChannel"
+			request-timeout="2000" reply-channel="findChefSegmentReplyChannel"
+			reply-timeout="2000" />
+
+		<int:method name="findArret" request-channel="findLastArretRequestChanel"
+			request-timeout="2000" reply-channel="findLastArretReplyChanel"
+			reply-timeout="2000" />
+
+		<int:method name="createArret" request-channel="createArretRequestChanel"
+			request-timeout="2000" reply-channel="createArretReplyChanel"
+			reply-timeout="2000" />
+			
+			<int:method name="updateArret" request-channel="updateArretRequestChanel"
+			request-timeout="2000" reply-channel="updateArretReplyChanel"
+			reply-timeout="2000" />
+			
+			<int:method name="createProduction" request-channel="createProductionRequestChanel"
+			request-timeout="2000" reply-channel="createProductionReplyChanel"
+			reply-timeout="2000" />
+			
+			<int:method name="findProduction" request-channel="loadProductionRequestChanel"
+			request-timeout="2000" reply-channel="loadProductionReplyChanel"
+			reply-timeout="2000" />
+			
+			<int:method name="updateProduction" request-channel="updateProductionRequestChanel"
+			request-timeout="2000" reply-channel="updateProductionReplyChanel"
+			reply-timeout="2000" />
+	</int:gateway>
+	<!-- <int-jdbc:outbound-gateway data-source="datasource" update="UPDATE 
+		DUMMY SET DUMMY_VALUE='test'" request-channel="findPersonRequestChannel" 
+		query="select * from Person where lower(name)=lower(:payload)" reply-channel="findPersonReplyChannel" 
+		row-mapper="personResultMapper" max-rows-per-poll="100"> </int-jdbc:outbound-gateway> -->
+
+
+
+	<bean id="mesureResultMapper" class="tn.suvis.production.model.MesureRowMapper" />
+	<int-jdbc:outbound-gateway data-source="datasource"
+		request-channel="createMesureRequestChannel" reply-channel="createMesureReplyChannel"
+		update="insert into Mesure(idTrame,idSegment,post,idChaine,etatArret,tArret,qteProduite,type,date) 
+										values
+										(:payload.idTrame,:payload.idSegment,:payload.post,:payload.idChaine,:payload.etatArret,:payload.tArret,
+										:payload.qteProduite,:payload.type,:payload.date)"
+		query="SELECT * FROM Mesure ORDER BY idTrame DESC LIMIT 1"
+		reply-sql-parameter-source-factory="replySource" row-mapper="mesureResultMapper"
+		keys-generated="true" />
+
+	<bean id="replySource"
+		class="org.springframework.integration.jdbc.ExpressionEvaluatingSqlParameterSourceFactory">
+		<property name="parameterExpressions">
+			<map>
+				<entry key="id" value="payload.idTrame" />
+			</map>
+		</property>
+	</bean>
+
+	<!-- <bean id="requestSource" class="org.springframework.integration.jdbc.ExpressionEvaluatingSqlParameterSourceFactory"> 
+		<property name="parameterExpressions"> <map> <entry key="idTrame" value="payload.idTrame" 
+		/> <entry key="etatArret" value="payload.etatArret"/> <entry key="type" value="payload.type"/> 
+		<entry key="idSegment" value="payload.idSegment" /> <entry key="post" value="payload.post" 
+		/> <entry key="idChaine" value="payload.idChaine" /> <entry key="tArret" 
+		value="payload.tArret" /> <entry key="qteProduite" value="payload.qteProduite" 
+		/> <entry key="date" value="payload.date" /> </map> </property> </bean> -->
+
+	<!-- Team leader -->
+
+	<bean id="usersResultMapper" class="tn.suvis.production.model.UsersRowMapper" />
+	<!-- find chef chaine -->
+	<int-jdbc:outbound-gateway data-source="datasource"
+		requires-reply="false" request-channel="findChaineRequestChannel"
+		reply-channel="findChaineReplyChannel"
+		query="SELECT * FROM users u,chaine c WHERE c.idChaine=:payload and c.CODE_CHEF=u.user_id"
+		row-mapper="usersResultMapper" keys-generated="true" />
+
+	<!-- find controle maitre -->
+	<bean id="chefSegment" class="tn.suvis.production.model.UsersRowMapper" />
+	<int-jdbc:outbound-gateway data-source="datasource"
+		requires-reply="false" request-channel="findControleMaitreRequestChannel"
+		reply-channel="findControleMaitreReplyChannel"
+		query="select distinct * FROM users u,post p WHERE u.user_id=p.CODE_CONTRE_MAITRE
+AND p.nom=:payload.nom and p.CODE_SEGMENT=:payload.segment.idSegment"
+		row-mapper="chefSegment" keys-generated="true" />
+
+	<!-- find chef plent section -->
+	<int-jdbc:outbound-gateway data-source="datasource"
+		requires-reply="false" request-channel="findPlentSectionRequestChannel"
+		reply-channel="findPlentSectionReplyChannel"
+		query="SELECT * FROM users u,plantsection p WHERE p.id=:payload and p.CODE_CHEF=u.user_id ORDER BY u.user_id DESC LIMIT 1"
+		row-mapper="usersResultMapper" keys-generated="true" />
+
+	<!-- find chef segment -->
+	<int-jdbc:outbound-gateway data-source="datasource"
+		requires-reply="false" request-channel="findChefSegmentRequestChannel"
+		reply-channel="findChefSegmentReplyChannel"
+		query="SELECT * FROM users u,segment s WHERE s.idSegment=:payload and s.CODE_CHEF_SEGMENT=u.user_id ORDER BY u.user_id DESC LIMIT 1"
+		row-mapper="usersResultMapper" keys-generated="true" />
+
+	<!-- find last application configuration -->
+	<bean id="configurationApplicationRowMapper"
+		class="tn.suvis.production.model.ConfigurationApplicationRowMapper" />
+	<int-jdbc:outbound-gateway data-source="datasource"
+		request-channel="findLastConfigRequestChanel" reply-channel="findLastConfigReplyChanel"
+		query="SELECT * FROM configurationapplication c ORDER BY c.id DESC LIMIT 1"
+		row-mapper="configurationApplicationRowMapper" keys-generated="true" />
+
+	<!-- Load Stop -->
+	<bean id="arrretResultRowMapper" class="tn.suvis.production.model.ArretRowMapper" />
+	<int-jdbc:outbound-gateway data-source="datasource"
+		requires-reply="false" request-channel="findLastArretRequestChanel"
+		reply-channel="findLastArretReplyChanel"
+		query="SELECT * FROM arret a where a.idSegment=:payload[1] 
+		and a.idChaine=:payload[0] and day(a.debut)=day(:payload[2]) ORDER BY a.id DESC LIMIT 1"
+		row-mapper="arrretResultRowMapper" keys-generated="true" />
+
+	<!-- Create new stop -->
+	<int-jdbc:outbound-gateway data-source="datasource"
+		request-channel="createArretRequestChanel" reply-channel="createArretReplyChanel"
+		update="insert into  Arret(debut,fin,idSegment,idChaine,status,raison) 
+										values
+										(:payload.debut,:payload.fin,:payload.idSegment,:payload.idChaine,:payload.status,:payload.raison)"
+		query="SELECT * FROM Arret ORDER BY id DESC LIMIT 1"
+		reply-sql-parameter-source-factory="stopReplySource" row-mapper="arrretResultRowMapper"
+		keys-generated="true" />
+
+	<bean id="stopReplySource"
+		class="org.springframework.integration.jdbc.ExpressionEvaluatingSqlParameterSourceFactory">
+		<property name="parameterExpressions">
+			<map>
+				<entry key="id" value="payload.id" />
+			</map>
+		</property>
+	</bean>
+	
+	<!-- Update stop -->
+	<int-jdbc:outbound-gateway data-source="datasource"
+		 request-channel="updateArretRequestChanel"
+		reply-channel="updateArretReplyChanel"
+		requires-reply="false"
+		update="update arret set debut=:payload.debut,fin=:payload.fin,idSegment=:payload.idSegment,
+		idChaine=:payload.idChaine,status=:payload.status,raison=:payload.raison where id=:payload.id"
+	 keys-generated="true" />
+	
+	<bean id="productionResultRowMapper" class="tn.suvis.production.model.ProductionRowMapper" />	
+	<!-- Create production -->
+	<int-jdbc:outbound-gateway data-source="datasource"
+		request-channel="createProductionRequestChanel" reply-channel="createProductionReplyChanel"
+		update="insert into  Production(date,idSegment,idChaine,qteProduite,post) 
+										values
+										(:payload.date,:payload.idSegment,:payload.idChaine,:payload.qteProduite,:payload.post)"
+		query="SELECT * FROM Production ORDER BY idProduction DESC LIMIT 1"
+		reply-sql-parameter-source-factory="ProductionReplySource" row-mapper="productionResultRowMapper"
+		keys-generated="true" />
+
+	<bean id="ProductionReplySource"
+		class="org.springframework.integration.jdbc.ExpressionEvaluatingSqlParameterSourceFactory">
+		<property name="parameterExpressions">
+			<map>
+				<entry key="id" value="payload.idProduction" />
+			</map>
+		</property>
+	</bean>
+	
+	
+	<!-- Find production -->
+	<int-jdbc:outbound-gateway data-source="datasource"
+		requires-reply="false" request-channel="loadProductionRequestChanel"
+		reply-channel="loadProductionReplyChanel"
+		query="SELECT * FROM production p where date(p.date)=date(:payload[0])
+		and p.post=:payload[3] 
+		and p.idSegment=:payload[1] and p.idChaine=:payload[2] ORDER BY p.idProduction DESC LIMIT 1"
+		row-mapper="productionResultRowMapper" keys-generated="true" />
+	
+	<!-- Update production-->
+	<int-jdbc:outbound-gateway data-source="datasource"
+		 request-channel="updateProductionRequestChanel"
+		reply-channel="updateProductionReplyChanel"
+		requires-reply="false"
+		update="update production set qteProduite=:payload.qteProduite where idProduction=:payload.idProduction"
+	 keys-generated="true" />
+</beans>
+

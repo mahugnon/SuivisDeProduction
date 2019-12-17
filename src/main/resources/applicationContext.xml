@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:s="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.2.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+
+	<bean id="datasource"
+		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+		<property name="driverClassName" value="com.mysql.jdbc.Driver"></property>
+		<property name="url" value="jdbc:mysql://localhost:3306/leoni_db"></property>
+		<property name="username" value="root"></property>
+		<property name="password" value=""></property>
+	</bean>
+
+	<bean id="persistenceUnitManager"
+		class="org.springframework.orm.jpa.persistenceunit.DefaultPersistenceUnitManager">
+		<property name="defaultDataSource" ref="datasource"></property>
+		<property name="persistenceXmlLocations">
+			<list>
+				<value>classpath*:META-INF/persistence.xml</value>
+			</list>
+		</property>
+	</bean>
+	<bean id="entityManagerFactory"
+		class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+		<property name="persistenceUnitManager" ref="persistenceUnitManager"></property>
+		<property name="persistenceUnitName" value="PU_SUIVIS_PRODUCTION"></property>
+	</bean>
+	<bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+		<property name="entityManagerFactory" ref="entityManagerFactory"></property>
+	</bean>
+	<tx:annotation-driven transaction-manager="transactionManager" />
+	
+	<context:annotation-config></context:annotation-config>
+	
+	
+	
+<!-- Spring sécurité -->
+	<s:http auto-config="true" use-expressions="true">
+	<s:access-denied-handler error-page="/403" />
+		<s:intercept-url pattern="/" access="permitAll" />
+		 <s:intercept-url pattern="/kosu_connect/**" access="authenticated" /> 
+		<s:intercept-url pattern="/kosu_connect/superadmin/**" access="hasRole('SUPER_ADMIN')"/>
+		<s:intercept-url pattern="/kosu_connect/admin/**" access="hasAnyRole('ADMIN','SUPER_ADMIN')"/>
+		<s:intercept-url pattern="/kosu_connect/operateur/**" access="hasAnyRole('ADMIN','SUPER_ADMIN','CONSULTANT')"/>		
+		<s:form-login login-page="/login" default-target-url="/kosu_connect/bienvenue"
+			authentication-failure-url="/403" />
+		<s:logout logout-success-url="/login" delete-cookies="JSESSIONID"/>
+	</s:http>
+	
+	<s:authentication-manager>
+		<s:authentication-provider>
+			<s:password-encoder hash="md5"></s:password-encoder>
+			<s:jdbc-user-service data-source-ref="datasource"
+				users-by-username-query="select user_name,password, actived
+from users where user_name=?"
+				authorities-by-username-query="select u.user_name, r.roleName from users u, role r,user_role ur 
+where u.user_id = ur.users_user_id and ur.roles_idRole=r.idRole and u.user_name =? " />
+			
+			<!-- <s:user-service> <s:user name="admin1" password="admin1" authorities="ROLE_ADMIN_PROD"/> 
+				<s:user name="admin2" authorities="ROLE_ADMIN_CAT,ROLE_ADMIN_PROD" password="admin2" 
+				/> </s:user-service> -->
+		</s:authentication-provider>
+	</s:authentication-manager>
+	<bean id="dao" class="tn.suvis.production.dao.SuivisDaoImpl"></bean>
+	<bean id="metier" class="tn.suvis.production.metier.SuivisMetierImpl">
+	<property name="dao" ref="dao"></property>
+	</bean>
+	<bean id="excelView" class="tn.suvis.production.model.ExelUserExporter"></bean>
+	
+	
+	<bean id="mailSender" class ="org.springframework.mail.javamail.JavaMailSenderImpl" >
+    <property name="username" value="homahugnon@gmail.com" />
+    <property name="password" value="Gmek7523" />
+    <property name="javaMailProperties">
+    <props>
+        <prop key="mail.smtp.host">smtp.gmail.com</prop>
+        <prop key="mail.smtp.port">587</prop>
+        <prop key="mail.smtp.auth">true</prop>
+        <prop key="mail.smtp.starttls.enable">true</prop>
+    </props>
+    </property>
+</bean>
+</beans>

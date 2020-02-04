@@ -393,7 +393,7 @@ function resizeImage(file, size, callback) {
 		alert("An error occured while reading the file.");
 	}
 
-};
+}
 
 // Methode exécuter après chargement de toutes image par input type file après
 // reduction de l'image puis save.
